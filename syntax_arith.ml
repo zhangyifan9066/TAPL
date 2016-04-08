@@ -6,49 +6,28 @@ open Support.Pervasive
 (* Datatypes *)
 
 type term =
-    TmVar of info * int * int
-  | TmAbs of info * string * term
-  | TmApp of info * term * term
+    TmTrue of info
+  | TmFalse of info
+  | TmIf of info * term * term * term
+  | TmZero of info
+  | TmSucc of info * term
+  | TmPred of info * term
+  | TmIsZero of info * term
 
 type command =
   | Eval of info * term
-
-type binding = NameBind
-
-type context = (string * binding) list
 
 (* ---------------------------------------------------------------------- *)
 (* Extracting file info *)
 
 let tmInfo t = match t with
-    TmVar(fi,_,_) -> fi
-  | TmAbs(fi,_,_) -> fi
-  | TmApp(fi,_,_) -> fi
-
-(* ---------------------------------------------------------------------- *)
-(* Shifting *)
-
-let termShift d t = 
-  let rec walk c t = match t with 
-    TmVar(fi,x,n) -> if x >= c then TmVar(fi, x+d, n+d)
-                     else TmVar(fi, x, n+d);
-  | TmAbs(fi,x,t1) -> TmAbs(fi, x, walk (c+1) t1)
-  | TmApp(fi,t1,t2) -> TmApp(fi, walk c t1, walk c t2)
-in walk 0 t
-
-
-(* ---------------------------------------------------------------------- *)
-(* Substitution *)
-
-let termSubst j s t =
-  let rec walk c t = match t with
-    TmVar(fi,x,n) -> if x=j+c then termShift c s else TmVar(fi,x,n)
-  | TmAbs(fi,x,t1) -> TmAbs(fi, x, walk (c+1) t1)
-  |TmApp(fi,t1,t2) -> TmApp(fi, walk c t1, walk c t2)
-in walk 0 t
-
-let termSubstTop s t =
-  termShift (-1) (termSubst 0 (termShift 1 s) t)
+    TmTrue(fi) -> fi
+  | TmFalse(fi) -> fi
+  | TmIf(fi,_,_,_) -> fi
+  | TmZero(fi) -> fi
+  | TmSucc(fi,_) -> fi
+  | TmPred(fi,_) -> fi
+  | TmIsZero(fi,_) -> fi 
 
 (* ---------------------------------------------------------------------- *)
 (* Printing *)
@@ -106,3 +85,7 @@ and printtm_ATerm outer t = match t with
   | t -> pr "("; printtm_Term outer t; pr ")"
 
 let printtm t = printtm_Term true t 
+
+
+
+
