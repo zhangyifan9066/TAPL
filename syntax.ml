@@ -54,15 +54,31 @@ let termSubstTop s t =
 (* ---------------------------------------------------------------------- *)
 (* Binding *)
 
-let name2index fi ctx name = 
-    let rec name2indexRec fi ctx name = 
-      match ctx iwth
-          [] -> error fi ("Unbinded variable " ^ name)
-        | (n,_)::rest -> if n=name 0 else (name2indexRec fi rest name) + 1
-    in
-    ctxlength - name2indexRec fi ctx name
+let rec name2index fi ctx name = 
+  match ctx with
+      [] -> error fi ("Unbinded variable " ^ name)
+    | (n,_)::rest -> if n=name then 0 else (name2index fi rest name) + 1
+
+let index2name fi ctx index =
+  try
+    fst (List.nth ctx index)
+  with Failure _ ->
+    error fi ("Index " ^ (string_of_int index) ^ " is not in the current context.")
+
+let ctxlength ctx = List.length ctx
 
 let addBinding ctx name = (name, NameBind)::ctx
+
+let pickfreshname ctx name =
+    let rec isInContext ctx name =
+      match ctx with
+        [] -> false
+      | (n,_)::rest -> if n = name then true else isInContext rest name
+    in
+    if isInContext ctx x then 
+      let newName = name ^ "'" in pickfreshname ctx newName
+    else addBinding ctx name, name
+
 
 (* ---------------------------------------------------------------------- *)
 (* Printing *)
@@ -85,38 +101,29 @@ let obox() = open_hvbox 2
 let cbox() = close_box()
 let break() = print_break 0 0
 
-let rec printtm_Term outer t = match t with
-    TmIf(fi, t1, t2, t3) ->
+let rec printtm_Term outer ctx t = match t with
+    TmAbs(fi, name, t1) ->
        obox0();
-       pr "if ";
-       printtm_Term false t1;
-       print_space();
-       pr "then ";
-       printtm_Term false t2;
-       print_space();
-       pr "else ";
-       printtm_Term false t3;
+       let (ctx', x') = pickfreshname ctx x in
+       (pr "lambda"; pr x'; pr ". "; print_Term outer ctx' t1;);
        cbox()
-  | t -> printtm_AppTerm outer t
+  | t -> printtm_AppTerm outer ctx t
 
-and printtm_AppTerm outer t = match t with
-    TmPred(_,t1) ->
-       pr "pred "; printtm_ATerm false t1
-  | TmIsZero(_,t1) ->
-       pr "iszero "; printtm_ATerm false t1
-  | t -> printtm_ATerm outer t
+and printtm_AppTerm outer ctx t = match t with
+    TmApp(fi,t1,t2) ->
+        obox0();
+        printtm_AppTerm false ctx t1;
+        pr " ";
+        printtm_ATerm false ctx t2;
+        cbox()
+  | t -> printtm_ATerm outer ctx t
 
-and printtm_ATerm outer t = match t with
-    TmTrue(_) -> pr "true"
-  | TmFalse(_) -> pr "false"
-  | TmZero(fi) ->
-       pr "0"
-  | TmSucc(_,t1) ->
-     let rec f n t = match t with
-         TmZero(_) -> pr (string_of_int n)
-       | TmSucc(_,s) -> f (n+1) s
-       | _ -> (pr "(succ "; printtm_ATerm false t1; pr ")")
-     in f 1 t1
-  | t -> pr "("; printtm_Term outer t; pr ")"
+and printtm_ATerm outer ctx t = match t with
+    TmVar(fi,index,len) -> 
+      obox0();
+      (if ctxlength ctx = len then pr (index2name fi ctx index)
+      else pr "[bad index]");
+      cbox();
+  | t -> pr "("; printtm_Term outer ctx t; pr ")"
 
-let printtm t = printtm_Term true t 
+let printtm ctx t = printtm_Term true ctx t 
