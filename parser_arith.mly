@@ -30,7 +30,6 @@ open Syntax
 %token <Support.Error.info> SUCC
 %token <Support.Error.info> PRED
 %token <Support.Error.info> ISZERO
-%token <Support.Error.info> LAMBDA
 
 /* Identifier and constant value tokens */
 %token <string Support.Error.withinfo> UCID  /* uppercase-initial */
@@ -85,7 +84,7 @@ open Syntax
 */
 
 %start toplevel
-%type <Syntax.context -> Syntax.command list > toplevel
+%type < Syntax.command list > toplevel
 %%
 
 /* ---------------------------------------------------------------------- */
@@ -95,61 +94,46 @@ open Syntax
    by a semicolon. */
 toplevel :
     EOF
-      { fun ctx -> [] }
+      { [] }
   | Command SEMI toplevel
-      { fun ctx ->
-          let cmd = $1 ctx in
-          let cmds = $3 snd(cmd) in
+      { let cmd = $1 in
+          let cmds = $3 in
           cmd::cmds }
 
 /* A top-level command */
 Command :
   | Term 
-      { fun ctx -> let t = $1 ctx in Eval(tmInfo t, t, ctx) }
-  | LCID SLASH
-      {fun ctx -> Binder($1.i, $1.v, NameBind, addBinding $1.v ctx}
-  | UCID SLASH
-      {fun ctx -> Binder($1.i, $1.v, NameBind, addBinding $1.v ctx}
+      { (let t = $1 in Eval(tmInfo t,t)) }
 
 Term :
     AppTerm
       { $1 }
-  | LAMBDA LCID DOT Term
-      { fun ctx ->
-          let ctx' = addBinding ctx $2 in
-          let t = $4 ctx' in
-          TmAbs($1, $2.v, t)}
-  | LAMBDA UCID DOT Term
-      { fun ctx ->
-          let ctx' = addBinding ctx $2 in
-          let t = $4 ctx' in
-          TmAbs($1, $2.v, t)}
+  | IF Term THEN Term ELSE Term
+      { TmIf($1, $2, $4, $6) }
 
 AppTerm :
     ATerm
       { $1 }
-  | AppTerm ATerm
-      { fun ctx -> 
-          let t1 = $1 ctx in
-          let t2 = $2 ctx in
-          TmApp(tmInfo t1, t1, t2)}
+  | SUCC ATerm
+      { TmSucc($1, $2) }
+  | PRED ATerm
+      { TmPred($1, $2) }
+  | ISZERO ATerm
+      { TmIsZero($1, $2) }
 
 /* Atomic terms are ones that never require extra parentheses */
 ATerm :
     LPAREN Term RPAREN  
       { $2 } 
-  | LCID 
-      { fun ctx ->
-          let index = name2index $1.i ctx $1.v in
-          let len = ctxlength ctx in
-          TmVar($1.i, index, len)
-      }
-  | UCID 
-      { fun ctx ->
-          let index = name2index $1.i ctx $1.v in
-          let len = ctxlength ctx in
-          TmVar($1.i, index, len)
-      }
+  | TRUE
+      { TmTrue($1) }
+  | FALSE
+      { TmFalse($1) }
+  | INTV
+      { let rec f n = match n with
+              0 -> TmZero($1.i)
+            | n -> TmSucc($1.i, f (n-1))
+          in f $1.v }
 
 
 /*   */

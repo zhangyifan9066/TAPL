@@ -10,12 +10,13 @@ type term =
   | TmAbs of info * string * term
   | TmApp of info * term * term
 
-type command =
-  | Eval of info * term
-
 type binding = NameBind
 
 type context = (string * binding) list
+
+type command =
+  | Eval of info * term * context
+  | Bind of info * string * binding * context
 
 (* ---------------------------------------------------------------------- *)
 (* Extracting file info *)
@@ -44,11 +45,24 @@ let termSubst j s t =
   let rec walk c t = match t with
     TmVar(fi,x,n) -> if x=j+c then termShift c s else TmVar(fi,x,n)
   | TmAbs(fi,x,t1) -> TmAbs(fi, x, walk (c+1) t1)
-  |TmApp(fi,t1,t2) -> TmApp(fi, walk c t1, walk c t2)
+  | TmApp(fi,t1,t2) -> TmApp(fi, walk c t1, walk c t2)
 in walk 0 t
 
 let termSubstTop s t =
   termShift (-1) (termSubst 0 (termShift 1 s) t)
+
+(* ---------------------------------------------------------------------- *)
+(* Binding *)
+
+let name2index fi ctx name = 
+    let rec name2indexRec fi ctx name = 
+      match ctx iwth
+          [] -> error fi ("Unbinded variable " ^ name)
+        | (n,_)::rest -> if n=name 0 else (name2indexRec fi rest name) + 1
+    in
+    ctxlength - name2indexRec fi ctx name
+
+let addBinding ctx name = (name, NameBind)::ctx
 
 (* ---------------------------------------------------------------------- *)
 (* Printing *)
