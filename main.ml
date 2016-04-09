@@ -50,27 +50,30 @@ in
 
 let alreadyImported = ref ([] : string list)
 
-let rec process_command  cmd = match cmd with
-  | Eval(fi,t) -> 
-      let t' = eval t in
-      printtm_ATerm true t'; 
+let rec process_command cmd = match cmd with
+  | Eval(fi,t,ctx) -> 
+      let t' = eval ctx t in
+      printtm_ATerm true ctx t'; 
       force_newline();
       ()
+  | Bind(fi,name,bind,ctx) ->
+      pr ("Binding" ^ name); force_newline();
+      ()
   
-let process_file f  =
+let process_file f =
   alreadyImported := f :: !alreadyImported;
-  let cmds = parseFile f in
-  let g  c =  
+  let cmds = parseFile f [] in
+  let g c =  
     open_hvbox 0;
-    let results = process_command  c in
+    let results = process_command c in
     print_flush();
     results
   in
-    List.iter g  cmds
+    List.iter g cmds
 
 let main () = 
   let inFile = parseArgs() in
-  let _ = process_file inFile  in
+  let _ = process_file inFile in
   ()
 
 let () = set_max_boxes 1000
