@@ -99,7 +99,10 @@ toplevel :
   | Command SEMI toplevel
       { fun ctx ->
           let cmd = $1 ctx in
-          let cmds = $3 snd(cmd) in
+          let ctx' = match cmd with
+              Eval(_,_, ctx'') -> ctx''
+            | Bind(_,_,_, ctx'') -> ctx'' in
+          let cmds = $3 ctx' in
           cmd::cmds }
 
 /* A top-level command */
@@ -107,21 +110,21 @@ Command :
   | Term 
       { fun ctx -> let t = $1 ctx in Eval(tmInfo t, t, ctx) }
   | LCID SLASH
-      {fun ctx -> Binder($1.i, $1.v, NameBind, addBinding $1.v ctx}
+      { fun ctx -> Bind($1.i, $1.v, NameBind, addBinding ctx $1.v) }
   | UCID SLASH
-      {fun ctx -> Binder($1.i, $1.v, NameBind, addBinding $1.v ctx}
+      { fun ctx -> Bind($1.i, $1.v, NameBind, addBinding ctx $1.v) }
 
 Term :
     AppTerm
       { $1 }
   | LAMBDA LCID DOT Term
       { fun ctx ->
-          let ctx' = addBinding ctx $2 in
+          let ctx' = addBinding ctx $2.v in
           let t = $4 ctx' in
           TmAbs($1, $2.v, t)}
   | LAMBDA UCID DOT Term
       { fun ctx ->
-          let ctx' = addBinding ctx $2 in
+          let ctx' = addBinding ctx $2.v in
           let t = $4 ctx' in
           TmAbs($1, $2.v, t)}
 

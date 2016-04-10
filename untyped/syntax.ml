@@ -69,13 +69,13 @@ let ctxlength ctx = List.length ctx
 
 let addBinding ctx name = (name, NameBind)::ctx
 
-let pickfreshname ctx name =
-    let rec isInContext ctx name =
+let rec pickfreshname ctx name =
+    let rec isInContext ctx nn =
       match ctx with
         [] -> false
-      | (n,_)::rest -> if n = name then true else isInContext rest name
+      | (n,_)::rest -> if n = nn then true else isInContext rest nn
     in
-    if isInContext ctx x then 
+    if isInContext ctx name then 
       let newName = name ^ "'" in pickfreshname ctx newName
     else addBinding ctx name, name
 
@@ -104,8 +104,8 @@ let break() = print_break 0 0
 let rec printtm_Term outer ctx t = match t with
     TmAbs(fi, name, t1) ->
        obox0();
-       let (ctx', x') = pickfreshname ctx x in
-       (pr "lambda"; pr x'; pr ". "; print_Term outer ctx' t1;);
+       let (ctx', name') = pickfreshname ctx name in
+       (pr "lambda "; pr name'; pr ". "; printtm_Term outer ctx' t1;);
        cbox()
   | t -> printtm_AppTerm outer ctx t
 

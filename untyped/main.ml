@@ -53,11 +53,11 @@ let alreadyImported = ref ([] : string list)
 let rec process_command cmd = match cmd with
   | Eval(fi,t,ctx) -> 
       let t' = eval ctx t in
-      printtm true ctx t'; 
+      printtm ctx t'; 
       force_newline();
       ()
   | Bind(fi,name,bind,ctx) ->
-      pr ("Binding" ^ name); force_newline();
+      pr ("Binding " ^ name); force_newline();
       ()
   
 let process_file f =
