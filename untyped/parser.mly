@@ -110,9 +110,17 @@ Command :
   | Term 
       { fun ctx -> let t = $1 ctx in Eval(tmInfo t, t, ctx) }
   | LCID SLASH
-      { fun ctx -> Bind($1.i, $1.v, NameBind, addBinding ctx $1.v) }
+      { fun ctx -> 
+          if isInContext ctx $1.v then
+            Bind(createInfo "already" 0 0, $1.v, NameBind, ctx)
+          else
+            Bind($1.i, $1.v, NameBind, addBinding ctx $1.v) }
   | UCID SLASH
-      { fun ctx -> Bind($1.i, $1.v, NameBind, addBinding ctx $1.v) }
+      { fun ctx -> 
+          if isInContext ctx $1.v then
+            Bind(createInfo "already" 0 0, $1.v, NameBind, ctx)
+          else
+            Bind($1.i, $1.v, NameBind, addBinding ctx $1.v) }
 
 Term :
     AppTerm

@@ -23,6 +23,7 @@ val name2index: info -> context -> string -> int
 val index2name: info -> context -> int -> string
 val ctxlength: context -> int
 val addBinding: context -> string -> context
+val isInContext: context -> string -> bool
 
 (* Printing *)
 val printtm: context -> term -> unit

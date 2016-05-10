@@ -57,8 +57,12 @@ let rec process_command cmd = match cmd with
       force_newline();
       ()
   | Bind(fi,name,bind,ctx) ->
-      pr ("Binding " ^ name); force_newline();
-      ()
+      if (getInfoStr fi) = "already" then
+          (pr (name ^ " already binded"); force_newline();
+          ())
+      else
+          (pr ("Binding " ^ name); force_newline();
+          ())
   
 let process_file f =
   alreadyImported := f :: !alreadyImported;

@@ -25,6 +25,7 @@ module Error : sig
      Used for printing error messages. *)
   type info
   val dummyinfo : info
+  val getInfoStr : info -> string
 
   (* Create file position info: filename lineno column *)
   val createInfo : string -> int -> int -> info

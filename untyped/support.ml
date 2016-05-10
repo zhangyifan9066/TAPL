@@ -10,6 +10,10 @@ type 'a withinfo = {i: info; v: 'a}
 let dummyinfo = UNKNOWN
 let createInfo f l c = FI(f, l, c)
 
+let getInfoStr fi = match fi with 
+          FI(f, l, c) -> f
+        | UNKNOWN -> " "
+
 let errf f = 
   print_flush(); 
   open_vbox 0; 

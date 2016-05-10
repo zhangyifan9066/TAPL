@@ -69,12 +69,12 @@ let ctxlength ctx = List.length ctx
 
 let addBinding ctx name = (name, NameBind)::ctx
 
+let rec isInContext ctx name = 
+  match ctx with
+    [] -> false
+  | (n,_)::rest -> if n = name then true else isInContext rest name
+
 let rec pickfreshname ctx name =
-    let rec isInContext ctx nn =
-      match ctx with
-        [] -> false
-      | (n,_)::rest -> if n = nn then true else isInContext rest nn
-    in
     if isInContext ctx name then 
       let newName = name ^ "'" in pickfreshname ctx newName
     else addBinding ctx name, name
